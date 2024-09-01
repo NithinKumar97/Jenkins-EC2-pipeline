@@ -3,9 +3,9 @@ provider "aws" {
 }
 
 # Fetch the AMI ID from the .bin file in S3
-data "aws_s3_bucket_object" "ami_bin_file" {
+data "aws_s3_object" "ami_bin_file" {
   bucket = "testec2ami"  # Replace with your S3 bucket name
-  key    = "ami-0dd88b73d06f3d468.bin"  # Replace with your S3 object key for the .bin file
+  key    = "ami-0dd88b73d06f3d468.bin"  # Replace with your S3 object key
 }
 
 resource "aws_vpc" "main" {
@@ -58,7 +58,7 @@ resource "aws_security_group" "allow_ssh" {
 
 # EC2 Instance using AMI stored in S3
 resource "aws_instance" "web" {
-  ami           = data.aws_s3_bucket_object.ami_bin_file.body  # Uses the .bin file content as AMI ID
+  ami           = "ami-0dd88b73d06f3d468"
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.public_subnet.id
   security_groups = [aws_security_group.allow_ssh.name]
