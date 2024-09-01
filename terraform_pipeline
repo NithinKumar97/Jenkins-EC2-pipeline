@@ -1,0 +1,64 @@
+pipeline {
+    agent any
+    environment {
+        AWS_ACCESS_KEY_ID     = credentials('aws-access-key')
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key')
+    }
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git 'https://github.com/your-repo.git'  // Replace with your repository URL
+            }
+        }
+        stage('Terraform Init') {
+            steps {
+                sh 'terraform init'
+            }
+        }
+        stage('Terraform Plan') {
+            steps {
+                sh 'terraform plan -out=tfplan'
+            }
+        }
+        stage('Show Plan') {
+            steps {
+                sh 'terraform show tfplan'
+            }
+        }
+        stage('Approve Apply') {
+            steps {
+                script {
+                    def userInput = input(
+                        id: 'confirmApply', message: 'Do you want to apply this Terraform plan?',
+                        parameters: [choice(name: 'Proceed', choices: ['Yes', 'No'], description: 'Approve to apply the Terraform changes')]
+                    )
+                    if (userInput == 'Yes') {
+                        sh 'terraform apply -auto-approve tfplan'
+                    } else {
+                        echo 'Apply canceled by user.'
+                    }
+                }
+            }
+        }
+        stage('Approve Destroy') {
+            steps {
+                script {
+                    def destroyInput = input(
+                        id: 'confirmDestroy', message: 'Do you want to destroy the Terraform resources?',
+                        parameters: [choice(name: 'Proceed', choices: ['Yes', 'No'], description: 'Approve to destroy the Terraform resources')]
+                    )
+                    if (destroyInput == 'Yes') {
+                        sh 'terraform destroy -auto-approve'
+                    } else {
+                        echo 'Destroy canceled by user.'
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
