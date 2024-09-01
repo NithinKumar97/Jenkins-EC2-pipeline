@@ -7,7 +7,7 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git 'https://github.com/your-repo.git'  // Replace with your repository URL
+                git branch: 'your-branch-name', url: 'https://github.com/your-repo.git'
             }
         }
         stage('Terraform Init') {
