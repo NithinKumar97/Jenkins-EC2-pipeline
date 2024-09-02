@@ -1,0 +1,45 @@
+pipeline {
+    agent any
+    environment {
+        AWS_ACCESS_KEY_ID     = credentials('aws-access-key')
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key')
+    }
+    stages {
+        stage('Checkout Code') {
+            steps {
+                dir('terraform_workspace') {
+                    git branch: 'your-branch-name', url: 'https://github.com/your-repo.git'
+                }
+            }
+        }
+        stage('Terraform Init') {
+            steps {
+                dir('terraform_workspace') {
+                    sh 'terraform init'
+                }
+            }
+        }
+        stage('Approve Destroy') {
+            steps {
+                dir('terraform_workspace') {
+                    script {
+                        def destroyInput = input(
+                            id: 'confirmDestroy', message: 'Do you want to destroy the Terraform resources?',
+                            parameters: [choice(name: 'Proceed', choices: ['Yes', 'No'], description: 'Approve to destroy the Terraform resources')]
+                        )
+                        if (destroyInput == 'Yes') {
+                            sh 'terraform destroy -auto-approve'
+                        } else {
+                            echo 'Destroy canceled by user.'
+                        }
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
