@@ -70,7 +70,8 @@ resource "aws_security_group" "allow_ssh" {
 
 # EC2 Instance using AMI stored in S3
 resource "aws_instance" "web" {
-  ami                         = "ami-0dd88b73d06f3d468"  # Replace with your AMI ID manually
+  #ami                         = "ami-0dd88b73d06f3d468"  # Replace with your AMI ID manually
+  ami                         = trimspace(file("${path.module}/ami_id.txt"))
   instance_type               = "t2.micro"
   subnet_id                   = aws_subnet.public_subnet.id
   vpc_security_group_ids      = [aws_security_group.allow_ssh.id]
