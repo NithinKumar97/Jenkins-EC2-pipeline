@@ -1,0 +1,69 @@
+pipeline {
+    agent any
+    environment {
+        AWS_ACCESS_KEY_ID     = credentials('aws-access-key')
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key')
+    }
+    stages {
+        stage('Create Directory') {
+            steps {
+                script {
+                    sh 'mkdir -p terraform_workspace'
+                    dir('terraform_workspace') {
+                        // Any additional setup for the directory can be done here
+                    }
+                }
+            }
+        }
+        stage('Checkout Code') {
+            steps {
+                dir('terraform_workspace') {
+                    git branch: 'your-branch-name', url: 'https://github.com/your-repo.git'
+                }
+            }
+        }
+        stage('Terraform Init') {
+            steps {
+                dir('terraform_workspace') {
+                    sh 'terraform init'
+                }
+            }
+        }
+        stage('Terraform Plan') {
+            steps {
+                dir('terraform_workspace') {
+                    sh 'terraform plan -out=tfplan'
+                }
+            }
+        }
+        stage('Show Plan') {
+            steps {
+                dir('terraform_workspace') {
+                    sh 'terraform show tfplan'
+                }
+            }
+        }
+        stage('Approve Apply') {
+            steps {
+                dir('terraform_workspace') {
+                    script {
+                        def userInput = input(
+                            id: 'confirmApply', message: 'Do you want to apply this Terraform plan?',
+                            parameters: [choice(name: 'Proceed', choices: ['Yes', 'No'], description: 'Approve to apply the Terraform changes')]
+                        )
+                        if (userInput == 'Yes') {
+                            sh 'terraform apply -auto-approve tfplan'
+                        } else {
+                            echo 'Apply canceled by user.'
+                        }
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
