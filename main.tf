@@ -2,10 +2,22 @@ provider "aws" {
   region = "eu-central-1"
 }
 
-# Fetch the AMI ID from the .bin file in S3
+/*# Fetch the AMI ID from the .bin file in S3
 data "aws_s3_object" "ami_bin_file" {
   bucket = "testec2ami"  # Replace with your S3 bucket name
   key    = "ami-0dd88b73d06f3d468.bin"  # Replace with your S3 object key
+}*/
+
+# Fetch the AMI ID stored in S3 as a .bin file
+data "aws_s3_object" "ami_bin_file" {
+  bucket = "testec2ami"  # Replace with your S3 bucket name
+  key    = "ami-0dd88b73d06f3d468.bin"  # Replace with your S3 object key
+}
+
+# Read the contents of the .bin file to get the AMI ID
+data "local_file" "ami_id" {
+  content  = data.aws_s3_object.ami_bin_file.body
+  filename = "${path.module}/ami_id.txt"
 }
 
 resource "aws_vpc" "main" {
